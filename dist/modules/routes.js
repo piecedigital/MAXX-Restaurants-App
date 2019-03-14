@@ -40,8 +40,39 @@ var Routes = /** @class */ (function () {
         this.app.get("/test", this.test.bind(this));
     };
     Routes.prototype.indexView = function (req, res, next) {
+        var _this = this;
         if (next === void 0) { next = null; }
-        res.render("index");
+        var comp = {};
+        console.log("cookies", req.cookies);
+        new database_1.DatabaseMethods.Session(this.main.database)
+            .findOne({
+            sessionPK: req.cookies.timeSession
+        })
+            .then(function (sessionDoc) { return new database_1.DatabaseMethods.User(_this.main.database).findOne({
+            userPK: sessionDoc.userFK
+        }); })
+            .then(function (userDoc) { return comp.userDoc = userDoc.document; })
+            .then(function () { return new database_1.DatabaseMethods.Restaurant(_this.main.database).find(); })
+            .then(function (restaurantDocs) { return comp.restaurantDocs = restaurantDocs.map(function (d) { return d.document; }); })
+            .then(function () { return new database_1.DatabaseMethods.Post(_this.main.database).find(); })
+            .then(function (postDocs) { return comp.postDocs = postDocs.map(function (d) { return d.document; }); })
+            .then(function () {
+            // console.log("got docs", Object.keys(comp));
+            // console.log("got docs", (comp.userDoc));
+            res.render("index", {
+                user: comp.userDoc,
+                restaurants: comp.restaurantDocs,
+                posts: comp.postDocs,
+            });
+        })
+            .catch(function (e) {
+            console.error(e);
+            res.render("index", {
+                user: comp.userDoc || null,
+                restaurants: comp.restaurantDocs || null,
+                posts: comp.postDocs || null,
+            });
+        });
     };
     Routes.prototype.restaurantsView = function (req, res, next) {
         if (next === void 0) { next = null; }
@@ -118,7 +149,6 @@ var Routes = /** @class */ (function () {
             });
         })
             .catch(function (e) { return console.error(e); });
-        // res.sendFile(join(__dirname, "../views/testbench.html"));
     };
     Routes.prototype.test = function (req, res, next) {
         if (next === void 0) { next = null; }

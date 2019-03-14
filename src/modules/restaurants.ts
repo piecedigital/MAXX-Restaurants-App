@@ -37,3 +37,10 @@ export enum PostType {
     REVIEW = 1,
     COMMENT = 2,
 }
+
+export enum PaymentType {
+    VISA = 1,
+    DISCOVERY = 2,
+    MASTER_CARD = 3,
+    AMERICAN_EXPRESS = 4
+}

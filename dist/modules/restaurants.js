@@ -34,3 +34,10 @@ var PostType;
     PostType[PostType["REVIEW"] = 1] = "REVIEW";
     PostType[PostType["COMMENT"] = 2] = "COMMENT";
 })(PostType = exports.PostType || (exports.PostType = {}));
+var PaymentType;
+(function (PaymentType) {
+    PaymentType[PaymentType["VISA"] = 1] = "VISA";
+    PaymentType[PaymentType["DISCOVERY"] = 2] = "DISCOVERY";
+    PaymentType[PaymentType["MASTER_CARD"] = 3] = "MASTER_CARD";
+    PaymentType[PaymentType["AMERICAN_EXPRESS"] = 4] = "AMERICAN_EXPRESS";
+})(PaymentType = exports.PaymentType || (exports.PaymentType = {}));

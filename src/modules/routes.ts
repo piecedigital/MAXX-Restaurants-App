@@ -49,7 +49,39 @@ export class Routes {
     }
 
     indexView(req: express.Request, res: express.Response, next: express.NextFunction = null) {
-        res.render("index");
+        let comp: any = {};
+
+        console.log("cookies", req.cookies);
+
+        new DatabaseMethods.Session(this.main.database)
+            .findOne({
+                sessionPK: req.cookies.timeSession
+            })
+            .then(sessionDoc => new DatabaseMethods.User(this.main.database).findOne({
+                userPK: sessionDoc.userFK
+            }))
+            .then(userDoc => comp.userDoc = userDoc.document)
+            .then(() => new DatabaseMethods.Restaurant(this.main.database).find())
+            .then(restaurantDocs => comp.restaurantDocs = restaurantDocs.map(d => d.document))
+            .then(() => new DatabaseMethods.Post(this.main.database).find())
+            .then(postDocs => comp.postDocs = postDocs.map(d => d.document))
+            .then(() => {
+                // console.log("got docs", Object.keys(comp));
+                // console.log("got docs", (comp.userDoc));
+                res.render("index", {
+                    user: comp.userDoc,
+                    restaurants: comp.restaurantDocs,
+                    posts: comp.postDocs,
+                });
+            })
+            .catch(e => {
+                console.error(e);
+                res.render("index", {
+                    user: comp.userDoc || null,
+                    restaurants: comp.restaurantDocs || null,
+                    posts: comp.postDocs || null,
+                });
+            });
     }
 
     restaurantsView(req: express.Request, res: express.Response, next: express.NextFunction = null) {
@@ -127,8 +159,6 @@ export class Routes {
                 });
             })
             .catch(e => console.error(e));
-
-        // res.sendFile(join(__dirname, "../views/testbench.html"));
     }
     test(req: express.Request, res: express.Response, next: express.NextFunction = null) {
         res.redirect(`/testbench`);

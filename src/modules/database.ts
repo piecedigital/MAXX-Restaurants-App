@@ -2,17 +2,19 @@ import { createConnection, Connection, Schema, Model, Document, model } from "mo
 import * as Mongoose from "mongoose";
 import { Routes } from "./routes";
 import { API } from "./api";
-import { PostType } from "./restaurants";
+import { PostType, PaymentType } from "./restaurants";
 
 export namespace DatabaseMethods {
     export class Database{
         connection: Connection;
 
         userModel: Model<Document>;
-        restaurantRatingModel: Model<Document>;
         sessionModel: Model<Document>;
         postModel: Model<Document>;
         restaurantModel: Model<Document>;
+        restaurantRatingModel: Model<Document>;
+        restaurantMetadata: Model<Document>;
+        restaurantHours: Model<Document>;
 
         routesModule: Routes;
         apiModule: API;
@@ -92,6 +94,46 @@ export namespace DatabaseMethods {
                     restaurantRatingPK: { type: String, required: true },
                     postFK: { type: String, required: true },
                     rating: { type: Number, default: 0 }
+                } as ORecord<RestaurantRating, ValueOf<Mongoose.SchemaDefinition>>, {
+                    timestamps: true
+                })
+            );
+
+            this.restaurantMetadata = this.connection.model("metadata",
+                new Schema({
+                    restaurantMetadataPK: string;
+                    restaurantFK: string
+                    restaurantHoursFK: string
+                    phone: string
+                    dineIn: boolean
+                    carryOut: boolean
+                    delivery: boolean
+                    paymentOptions: PaymentType[]
+                } as ORecord<RestaurantRating, ValueOf<Mongoose.SchemaDefinition>>, {
+                    timestamps: true
+                })
+            );
+
+            this.restaurantHours = this.connection.model("hours",
+                new Schema({
+                    restaurantHoursPK: string
+                    restaurantMetadataFK: string
+                    restaurantFK: string
+                    sundayStart: string;
+                    mondayStart: string;
+                    tuesdayStart: string;
+                    wednesdayStart: string;
+                    thursdayStart: string;
+                    fridayStart: string;
+                    saturdayStart: string;
+
+                    sundayEnd: string;
+                    mondayEnd: string;
+                    tuesdayEnd: string;
+                    wednesdayEnd: string;
+                    thursdayEnd: string;
+                    fridayEnd: string;
+                    saturdayEnd: string;
                 } as ORecord<RestaurantRating, ValueOf<Mongoose.SchemaDefinition>>, {
                     timestamps: true
                 })
@@ -600,6 +642,196 @@ export namespace DatabaseMethods {
                         collectionName: this.db.postModel.collection.name,
                         localField: "postFK",
                         foreignField: "postPK"
+                    },
+                    {
+                        collectionName: this.db.restaurantModel.collection.name,
+                        localField: "restaurantFK",
+                        foreignField: "restaurantPK"
+                    },
+                ]
+
+                this.finishPipeline(config, options, resolve, reject);
+            });
+        }
+    }
+
+    export class RestaurantMetadata extends Facilitator<RestaurantMetadata> {
+        restaurantMetadataPK: string;
+        /**
+         * FK: Restaurant.restaurantPK
+         */
+        restaurantFK: string;
+        /**
+         * FK: RestaurantHours.restaurantHoursPK
+         */
+        restaurantHoursFK: string;
+        phone: string;
+        dineIn: boolean;
+        carryOut: boolean;
+        delivery: boolean;
+        paymentOptions: PaymentType[];
+
+        model: Model<Document>;
+
+        keyList = [
+            "restaurantMetadataPK",
+            "restaurantFK",
+            "restaurantHoursFK",
+            "phone",
+            "dineIn",
+            "carryOut",
+            "delivery",
+            "paymentOptions",
+        ];
+
+        constructor(db: Database, doc: Document = null) {
+            super(db);
+
+            this.document = doc;
+
+            this.model = db.restaurantRatingModel;
+
+            this.addDoc(doc);
+        }
+
+        findOne(options: TORecord<RestaurantMetadata> = null) {
+            return new Promise<RestaurantMetadata>((resolve, reject) => {
+                this.model.findOne(options, (err, doc) => {
+                    if (err) return reject(err);
+
+                    this.document = doc;
+                    this.addDoc(doc);
+                    resolve(this);
+                });
+            });
+        }
+
+        find(options: TORecord<RestaurantMetadata> = null) {
+            return new Promise<RestaurantMetadata[]>((resolve, reject) => {
+                this.model.find(options, (err, docs) => {
+                    if (err) return reject(err);
+
+                    docs.map(doc => {
+                        this.selfFacilitated.push(new RestaurantMetadata(this.db, doc));
+                    });
+
+                    resolve(this.selfFacilitated);
+                });
+            });
+        }
+
+        joinAll(options?: TORecord<RestaurantMetadata>) {
+            return new Promise<any[]>((resolve, reject) => {
+                const config: joinConfig[] = [
+                    {
+                        collectionName: this.db.restaurantModel.collection.name,
+                        localField: "restaurantFK",
+                        foreignField: "restaurantPK"
+                    },
+                    {
+                        collectionName: this.db.restaurantHours.collection.name,
+                        localField: "restaurantHoursFK",
+                        foreignField: "restaurantHoursPK"
+                    },
+                ]
+
+                this.finishPipeline(config, options, resolve, reject);
+            });
+        }
+    }
+
+    export class RestaurantHours extends Facilitator<RestaurantHours> {
+        restaurantHoursPK: string;
+        /**
+         * FK: RestaurantMetadata.restaurantMetadataPK
+        */
+        restaurantMetadataFK: string;
+        /**
+         * FK: Restaurant.restaurantPK
+        */
+        restaurantFK: string;
+
+        sundayStart: string;
+        mondayStart: string;
+        tuesdayStart: string;
+        wednesdayStart: string;
+        thursdayStart: string;
+        fridayStart: string;
+        saturdayStart: string;
+
+        sundayEnd: string;
+        mondayEnd: string;
+        tuesdayEnd: string;
+        wednesdayEnd: string;
+        thursdayEnd: string;
+        fridayEnd: string;
+        saturdayEnd: string;
+
+        model: Model<Document>;
+
+        keyList = [
+            "restaurantHoursPK",
+            "restaurantMetadataFK",
+            "restaurantFK",
+            "sundayStart",
+            "mondayStart",
+            "tuesdayStart",
+            "wednesdayStart",
+            "thursdayStart",
+            "fridayStart",
+            "saturdayStart",
+            "sundayEnd",
+            "mondayEnd",
+            "tuesdayEnd",
+            "wednesdayEnd",
+            "thursdayEnd",
+            "fridayEnd",
+            "saturdayEnd",
+        ];
+
+        constructor(db: Database, doc: Document = null) {
+            super(db);
+
+            this.document = doc;
+
+            this.model = db.restaurantRatingModel;
+
+            this.addDoc(doc);
+        }
+
+        findOne(options: TORecord<RestaurantHours> = null) {
+            return new Promise<RestaurantHours>((resolve, reject) => {
+                this.model.findOne(options, (err, doc) => {
+                    if (err) return reject(err);
+
+                    this.document = doc;
+                    this.addDoc(doc);
+                    resolve(this);
+                });
+            });
+        }
+
+        find(options: TORecord<RestaurantHours> = null) {
+            return new Promise<RestaurantHours[]>((resolve, reject) => {
+                this.model.find(options, (err, docs) => {
+                    if (err) return reject(err);
+
+                    docs.map(doc => {
+                        this.selfFacilitated.push(new RestaurantHours(this.db, doc));
+                    });
+
+                    resolve(this.selfFacilitated);
+                });
+            });
+        }
+
+        joinAll(options?: TORecord<RestaurantHours>) {
+            return new Promise<any[]>((resolve, reject) => {
+                const config: joinConfig[] = [
+                    {
+                        collectionName: this.db.restaurantMetadata.collection.name,
+                        localField: "restaurantMetadataFK",
+                        foreignField: "restaurantMetadataPK"
                     },
                     {
                         collectionName: this.db.restaurantModel.collection.name,

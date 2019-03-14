@@ -14,6 +14,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 var mongoose_1 = require("mongoose");
+var restaurants_1 = require("./restaurants");
 var DatabaseMethods;
 (function (DatabaseMethods) {
     var Database = /** @class */ (function () {
@@ -76,6 +77,39 @@ var DatabaseMethods;
                 restaurantRatingPK: { type: String, required: true },
                 postFK: { type: String, required: true },
                 rating: { type: Number, default: 0 }
+            }, {
+                timestamps: true
+            }));
+            this.restaurantMetadata = this.connection.model("metadata", new mongoose_1.Schema({
+                restaurantMetadataPK: string,
+                restaurantFK: string,
+                restaurantHoursFK: string,
+                phone: string,
+                dineIn: boolean,
+                carryOut: boolean,
+                delivery: boolean,
+                paymentOptions: restaurants_1.PaymentType[]
+            }, {
+                timestamps: true
+            }));
+            this.restaurantHours = this.connection.model("hours", new mongoose_1.Schema({
+                restaurantHoursPK: string,
+                restaurantMetadataFK: string,
+                restaurantFK: string,
+                sundayStart: string,
+                mondayStart: string,
+                tuesdayStart: string,
+                wednesdayStart: string,
+                thursdayStart: string,
+                fridayStart: string,
+                saturdayStart: string,
+                sundayEnd: string,
+                mondayEnd: string,
+                tuesdayEnd: string,
+                wednesdayEnd: string,
+                thursdayEnd: string,
+                fridayEnd: string,
+                saturdayEnd: string
             }, {
                 timestamps: true
             }));
@@ -501,4 +535,149 @@ var DatabaseMethods;
         return RestaurantRating;
     }(Facilitator));
     DatabaseMethods.RestaurantRating = RestaurantRating;
+    var RestaurantMetadata = /** @class */ (function (_super) {
+        __extends(RestaurantMetadata, _super);
+        function RestaurantMetadata(db, doc) {
+            if (doc === void 0) { doc = null; }
+            var _this = _super.call(this, db) || this;
+            _this.keyList = [
+                "restaurantMetadataPK",
+                "restaurantFK",
+                "restaurantHoursFK",
+                "phone",
+                "dineIn",
+                "carryOut",
+                "delivery",
+                "paymentOptions",
+            ];
+            _this.document = doc;
+            _this.model = db.restaurantRatingModel;
+            _this.addDoc(doc);
+            return _this;
+        }
+        RestaurantMetadata.prototype.findOne = function (options) {
+            var _this = this;
+            if (options === void 0) { options = null; }
+            return new Promise(function (resolve, reject) {
+                _this.model.findOne(options, function (err, doc) {
+                    if (err)
+                        return reject(err);
+                    _this.document = doc;
+                    _this.addDoc(doc);
+                    resolve(_this);
+                });
+            });
+        };
+        RestaurantMetadata.prototype.find = function (options) {
+            var _this = this;
+            if (options === void 0) { options = null; }
+            return new Promise(function (resolve, reject) {
+                _this.model.find(options, function (err, docs) {
+                    if (err)
+                        return reject(err);
+                    docs.map(function (doc) {
+                        _this.selfFacilitated.push(new RestaurantMetadata(_this.db, doc));
+                    });
+                    resolve(_this.selfFacilitated);
+                });
+            });
+        };
+        RestaurantMetadata.prototype.joinAll = function (options) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                var config = [
+                    {
+                        collectionName: _this.db.restaurantModel.collection.name,
+                        localField: "restaurantFK",
+                        foreignField: "restaurantPK"
+                    },
+                    {
+                        collectionName: _this.db.restaurantHours.collection.name,
+                        localField: "restaurantHoursFK",
+                        foreignField: "restaurantHoursPK"
+                    },
+                ];
+                _this.finishPipeline(config, options, resolve, reject);
+            });
+        };
+        return RestaurantMetadata;
+    }(Facilitator));
+    DatabaseMethods.RestaurantMetadata = RestaurantMetadata;
+    var RestaurantHours = /** @class */ (function (_super) {
+        __extends(RestaurantHours, _super);
+        function RestaurantHours(db, doc) {
+            if (doc === void 0) { doc = null; }
+            var _this = _super.call(this, db) || this;
+            _this.keyList = [
+                "restaurantHoursPK",
+                "restaurantMetadataFK",
+                "restaurantFK",
+                "sundayStart",
+                "mondayStart",
+                "tuesdayStart",
+                "wednesdayStart",
+                "thursdayStart",
+                "fridayStart",
+                "saturdayStart",
+                "sundayEnd",
+                "mondayEnd",
+                "tuesdayEnd",
+                "wednesdayEnd",
+                "thursdayEnd",
+                "fridayEnd",
+                "saturdayEnd",
+            ];
+            _this.document = doc;
+            _this.model = db.restaurantRatingModel;
+            _this.addDoc(doc);
+            return _this;
+        }
+        RestaurantHours.prototype.findOne = function (options) {
+            var _this = this;
+            if (options === void 0) { options = null; }
+            return new Promise(function (resolve, reject) {
+                _this.model.findOne(options, function (err, doc) {
+                    if (err)
+                        return reject(err);
+                    _this.document = doc;
+                    _this.addDoc(doc);
+                    resolve(_this);
+                });
+            });
+        };
+        RestaurantHours.prototype.find = function (options) {
+            var _this = this;
+            if (options === void 0) { options = null; }
+            return new Promise(function (resolve, reject) {
+                _this.model.find(options, function (err, docs) {
+                    if (err)
+                        return reject(err);
+                    docs.map(function (doc) {
+                        _this.selfFacilitated.push(new RestaurantHours(_this.db, doc));
+                    });
+                    resolve(_this.selfFacilitated);
+                });
+            });
+        };
+        RestaurantHours.prototype.joinAll = function (options) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                var config = [
+                    {
+                        collectionName: _this.db.restaurantMetadata.collection.name,
+                        localField: "restaurantMetadataFK",
+                        foreignField: "restaurantMetadataPK"
+                    },
+                    {
+                        collectionName: _this.db.restaurantModel.collection.name,
+                        localField: "restaurantFK",
+                        foreignField: "restaurantPK"
+                    },
+                ];
+                _this.finishPipeline(config, options, resolve, reject);
+            });
+        };
+        return RestaurantHours;
+    }(Facilitator));
+    DatabaseMethods.RestaurantHours = RestaurantHours;
 })(DatabaseMethods = exports.DatabaseMethods || (exports.DatabaseMethods = {}));
